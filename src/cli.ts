@@ -5,6 +5,7 @@ import pc from 'picocolors';
 import { ForgeConfigSchema, type ForgeConfig } from './types.js';
 import { AudioForgeGenerator } from './generator.js';
 import { VoiceManager, POPULAR_VOICES } from './voice-manager.js';
+import { startServer } from './server.js';
 
 const program = new Command();
 
@@ -364,6 +365,23 @@ program
     fs.writeFileSync(target, JSON.stringify(sampleConfig, null, 2), 'utf8');
     console.log(pc.green(`✔ Created template configuration file at: ${pc.bold(target)}`));
     console.log(pc.dim('Run generation with:\n  audio-forge generate -c ' + filename + '\n'));
+  });
+
+// 6. SERVE API GATEWAY COMMAND
+program
+  .command('serve')
+  .description('Start the HTTP API gateway server')
+  .option('-p, --port <number>', 'Port to listen on', '3000')
+  .action(options => {
+    const port = parseInt(options.port, 10) || 3000;
+    startServer(port);
+    console.log(pc.green(`⚡ Audio Forge API Gateway running on port ${port}`));
+    console.log(pc.cyan(`🔑 API Key: ${pc.bold(process.env.API_KEY || 'forge-secret-key')}`));
+    console.log(pc.dim('Endpoints:'));
+    console.log(pc.dim('  POST /api/v1/generate         - Start audio synthesis (returns ACK)'));
+    console.log(pc.dim('  GET  /api/v1/generations/:id   - Check generation status & details'));
+    console.log(pc.dim('  GET  /api/v1/generations       - List paginated generations'));
+    console.log(pc.dim('  GET  /health                   - Health check (no auth)\n'));
   });
 
 program.parse(process.argv);
