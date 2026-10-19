@@ -1,0 +1,30 @@
+# ==============================================================================
+# Render Infrastructure as Code Blueprint
+# https://render.com/docs/blueprint-spec
+# ==============================================================================
+
+services:
+  - type: web
+    name: audio-forge
+    runtime: docker
+    plan: starter
+    region: oregon
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: DB_TABLE_NAME
+        value: audio_generations
+      - key: DATABASE_URL
+        sync: false
+      - key: R2_S3_API_URL
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET_NAME
+        value: automation
+      - key: API_KEY
+        sync: false

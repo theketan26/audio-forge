@@ -7,9 +7,10 @@ const PIPER_RELEASE_URL =
   'https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_linux_x86_64.tar.gz';
 
 export async function resolvePiperBinary(explicitPath?: string): Promise<string> {
-  // 1. Explicit path passed in config
-  if (explicitPath && fs.existsSync(explicitPath)) {
-    return path.resolve(explicitPath);
+  // 1. Environment variable or explicit path passed in config
+  const envPath = explicitPath || process.env.PIPER_BIN || process.env.PIPER_BIN_PATH;
+  if (envPath && fs.existsSync(envPath)) {
+    return path.resolve(envPath);
   }
 
   // 2. Check local workspace .piper directory

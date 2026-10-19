@@ -59,6 +59,36 @@ Start the server using the CLI or npm:
 # Using CLI
 audio-forge serve --port 3000
 
+# Or using Docker
+docker compose up --build
+```
+
+---
+
+## Deployment to Render 🚀
+
+Audio Forge is optimized for **Render Web Services** using Docker, ensuring that the C++ Piper engine, voice models, and asynchronous background tasks run without timeouts or serverless freezing:
+
+### Option A: 1-Click Blueprint (`render.yaml`)
+1. Push this repository to GitHub.
+2. In the [Render Dashboard](https://dashboard.render.com/), click **New +** → **Blueprint**.
+3. Select your repository. Render will automatically read [`render.yaml`](file:///home/developer/projects/audio-forge/render.yaml).
+4. Fill in the environment variables (`DATABASE_URL`, `R2_S3_API_URL`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `API_KEY`).
+5. Click **Apply**.
+
+### Option B: Manual Web Service
+1. In Render, select **New +** → **Web Service** → Connect your GitHub repo.
+2. Runtime: **Docker**.
+3. Health Check Path: `/health`.
+4. In the **Environment Variables** tab, add:
+   - `DATABASE_URL`
+   - `R2_S3_API_URL`
+   - `R2_ACCESS_KEY_ID`
+   - `R2_SECRET_ACCESS_KEY`
+   - `R2_BUCKET_NAME` (`automation`)
+   - `API_KEY`
+5. Click **Create Web Service**.
+
 # Or using npm
 npm run serve
 ```

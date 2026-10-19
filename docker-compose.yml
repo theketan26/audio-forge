@@ -1,0 +1,11 @@
+services:
+  audio-forge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: audio-forge
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - .env
+    restart: unless-stopped
