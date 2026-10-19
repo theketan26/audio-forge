@@ -8,8 +8,10 @@ use std::path::PathBuf;
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
 enum CliEngineMode {
+    Neural,
     Formant,
     Granular,
+    Psola,
 }
 
 #[derive(Parser, Debug)]
@@ -20,8 +22,8 @@ struct Args {
     #[arg(short, long, default_value = "Hello world! Welcome to AudioForge.")]
     script: String,
 
-    /// Synthesis mode: formant (humanoid/retro vocal tract) or granular (animalese blips)
-    #[arg(short, long, value_enum, default_value_t = CliEngineMode::Formant)]
+    /// Synthesis mode: neural (Piper VITS embedded), formant (vocal tract), granular (animalese), or psola
+    #[arg(short, long, value_enum, default_value_t = CliEngineMode::Neural)]
     mode: CliEngineMode,
 
     /// Deterministic 32-bit random seed
@@ -88,11 +90,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         breathiness: 0.06,
         open_quotient: 0.6,
         rest_viseme: VisemeId::Rest,
+        ..Default::default()
     };
 
     let engine_mode = match args.mode {
+        CliEngineMode::Neural => EngineMode::NeuralVits,
         CliEngineMode::Formant => EngineMode::Formant,
         CliEngineMode::Granular => EngineMode::Granular,
+        CliEngineMode::Psola => EngineMode::Psola,
     };
 
     let (voice_buffer, manifest) = engine.synthesize(

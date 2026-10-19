@@ -168,7 +168,7 @@ async fn render_dialogue(
     let character = characters.get(&char_id).cloned();
     drop(characters);
 
-    let mode = payload.mode.or_else(|| character.as_ref().map(|c| c.engine_mode)).unwrap_or(EngineMode::Formant);
+    let mode = payload.mode.or_else(|| character.as_ref().map(|c| c.engine_mode)).unwrap_or(EngineMode::NeuralVits);
     let voice_config = payload.voice_config.or_else(|| character.as_ref().map(|c| c.voice_config.clone())).unwrap_or_default();
     let seed = payload.seed.or_else(|| character.as_ref().map(|c| c.base_seed)).unwrap_or_else(|| rand::random());
     let fps = payload.target_fps.unwrap_or(30);
@@ -276,6 +276,25 @@ async fn get_render_wav(
 fn seed_default_characters() -> HashMap<String, Character> {
     let mut map = HashMap::new();
 
+    let c0 = Character {
+        id: "char-studio-narrator".to_string(),
+        name: "Studio Narrator (Neural VITS)".to_string(),
+        engine_mode: EngineMode::NeuralVits,
+        base_seed: 424242,
+        voice_config: VoiceConfig {
+            base_pitch_hz: 120.0,
+            formant_shift: 1.0,
+            speed: 1.0,
+            noise_scale: 0.667,
+            noise_w: 0.8,
+            speed_scale: 1.0,
+            rest_viseme: VisemeId::Rest,
+            ..Default::default()
+        },
+        sample_pack_url: None,
+        created_at: Utc::now().to_rfc3339(),
+    };
+
     let c1 = Character {
         id: "char-retro-hero".to_string(),
         name: "Retro Hero".to_string(),
@@ -290,6 +309,7 @@ fn seed_default_characters() -> HashMap<String, Character> {
             breathiness: 0.05,
             open_quotient: 0.58,
             rest_viseme: VisemeId::Rest,
+            ..Default::default()
         },
         sample_pack_url: None,
         created_at: Utc::now().to_rfc3339(),
@@ -309,6 +329,7 @@ fn seed_default_characters() -> HashMap<String, Character> {
             breathiness: 0.02,
             open_quotient: 0.50,
             rest_viseme: VisemeId::Closed,
+            ..Default::default()
         },
         sample_pack_url: None,
         created_at: Utc::now().to_rfc3339(),
@@ -328,6 +349,7 @@ fn seed_default_characters() -> HashMap<String, Character> {
             breathiness: 0.08,
             open_quotient: 0.65,
             rest_viseme: VisemeId::Rest,
+            ..Default::default()
         },
         sample_pack_url: None,
         created_at: Utc::now().to_rfc3339(),
@@ -347,11 +369,13 @@ fn seed_default_characters() -> HashMap<String, Character> {
             breathiness: 0.12,
             open_quotient: 0.68,
             rest_viseme: VisemeId::Rest,
+            ..Default::default()
         },
         sample_pack_url: None,
         created_at: Utc::now().to_rfc3339(),
     };
 
+    map.insert(c0.id.clone(), c0);
     map.insert(c1.id.clone(), c1);
     map.insert(c2.id.clone(), c2);
     map.insert(c3.id.clone(), c3);

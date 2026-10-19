@@ -29,3 +29,8 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# ONNX Runtime and Model weights
+onnxruntime/
+models/*.onnx
+

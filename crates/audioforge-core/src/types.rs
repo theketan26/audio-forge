@@ -2,15 +2,17 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum EngineMode {
+    NeuralVits,
     Formant,
     Granular,
+    Psola,
 }
 
 impl Default for EngineMode {
     fn default() -> Self {
-        EngineMode::Formant
+        EngineMode::NeuralVits
     }
 }
 
@@ -69,27 +71,90 @@ impl VisemeId {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GlottalDynamics {
+    pub open_quotient: f32,      // 0.35 to 0.85
+    pub breathiness_ratio: f32,  // 0.0 to 0.25
+    pub jitter_pct: f32,         // 0.2 to 2.5%
+    pub shimmer_pct: f32,        // 1.0 to 5.0%
+}
+
+impl Default for GlottalDynamics {
+    fn default() -> Self {
+        Self {
+            open_quotient: 0.65,
+            breathiness_ratio: 0.08,
+            jitter_pct: 0.8,
+            shimmer_pct: 2.5,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VoiceConfig {
+    #[serde(default = "default_model_checkpoint")]
+    pub model_checkpoint: String,
+    #[serde(default)]
+    pub speaker_id: i64,
+    #[serde(default = "default_speed_scale")]
+    pub speed_scale: f32,
+    #[serde(default = "default_noise_scale")]
+    pub noise_scale: f32,
+    #[serde(default = "default_noise_w")]
+    pub noise_w: f32,
+    #[serde(default)]
+    pub volume_gain_db: f32,
+
     pub base_pitch_hz: f32,
     pub formant_shift: f32,
     pub speed: f32,
+    #[serde(default)]
+    pub articulation_speed: f32,
+    #[serde(default)]
+    pub pitch_range_st: f32,
     pub jitter: f32,
     pub shimmer: f32,
     pub breathiness: f32,
     pub open_quotient: f32,
+    #[serde(default)]
+    pub glottal_dynamics: GlottalDynamics,
+    #[serde(default)]
+    pub fujisaki_params: crate::fujisaki::FujisakiParams,
     pub rest_viseme: VisemeId,
+}
+
+fn default_model_checkpoint() -> String {
+    "en_US-lessac-medium.onnx".to_string()
+}
+fn default_speed_scale() -> f32 {
+    1.0
+}
+fn default_noise_scale() -> f32 {
+    0.667
+}
+fn default_noise_w() -> f32 {
+    0.8
 }
 
 impl Default for VoiceConfig {
     fn default() -> Self {
         Self {
+            model_checkpoint: default_model_checkpoint(),
+            speaker_id: 0,
+            speed_scale: 1.0,
+            noise_scale: 0.667,
+            noise_w: 0.8,
+            volume_gain_db: 0.0,
             base_pitch_hz: 130.0,
             formant_shift: 1.0,
             speed: 1.0,
+            articulation_speed: 1.1,
+            pitch_range_st: 12.0,
             jitter: 0.012,
             shimmer: 0.015,
             breathiness: 0.06,
-            open_quotient: 0.6,
+            open_quotient: 0.65,
+            glottal_dynamics: GlottalDynamics::default(),
+            fujisaki_params: crate::fujisaki::FujisakiParams::default(),
             rest_viseme: VisemeId::Rest,
         }
     }

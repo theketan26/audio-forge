@@ -1,4 +1,4 @@
-export type EngineMode = 'formant' | 'granular';
+export type EngineMode = 'neural_vits' | 'formant' | 'granular' | 'psola';
 
 export type VisemeId =
   | 'rest'
@@ -10,15 +10,36 @@ export type VisemeId =
   | 'teeth_lip'
   | 'jaw_open';
 
+export interface FujisakiParams {
+  phrase_decay_alpha: number;
+  accent_decay_beta: number;
+  accent_strength: number;
+}
+
+export interface GlottalDynamics {
+  open_quotient: number;
+  breathiness_ratio: number;
+  jitter_pct: number;
+  shimmer_pct: number;
+}
+
 export interface VoiceConfig {
   base_pitch_hz: number;
   formant_shift: number;
   speed: number;
+  articulation_speed?: number;
+  pitch_range_st?: number;
   jitter: number;
   shimmer: number;
   breathiness: number;
   open_quotient: number;
+  fujisaki_params?: FujisakiParams;
+  glottal_dynamics?: GlottalDynamics;
   rest_viseme: VisemeId;
+  speaker_id?: number;
+  noise_scale?: number;
+  noise_w?: number;
+  speed_scale?: number;
 }
 
 export interface VisemeFrame {

@@ -13,18 +13,21 @@ export const App: React.FC = () => {
   const [characters, setCharacters] = useState<Character[]>([]);
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
 
-  const [engineMode, setEngineMode] = useState<EngineMode>('formant');
+  const [engineMode, setEngineMode] = useState<EngineMode>('neural_vits');
   const [seed, setSeed] = useState<number>(424242);
   const [targetFps, setTargetFps] = useState<number>(30);
   const [voiceConfig, setVoiceConfig] = useState<VoiceConfig>({
-    base_pitch_hz: 135.0,
-    formant_shift: 1.05,
+    base_pitch_hz: 120.0,
+    formant_shift: 1.0,
     speed: 1.0,
     jitter: 0.012,
     shimmer: 0.015,
     breathiness: 0.05,
     open_quotient: 0.58,
     rest_viseme: 'rest',
+    noise_scale: 0.667,
+    noise_w: 0.8,
+    speed_scale: 1.0,
   });
 
   const [bgmEnabled, setBgmEnabled] = useState<boolean>(false);
