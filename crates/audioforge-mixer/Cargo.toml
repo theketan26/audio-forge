@@ -1,0 +1,11 @@
+[package]
+name = "audioforge-mixer"
+version = "0.1.0"
+edition = "2021"
+description = "Multi-bus deterministic audio compositor and sidechain ducking engine"
+
+[dependencies]
+audioforge-core = { path = "../audioforge-core" }
+hound = "3.5"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"

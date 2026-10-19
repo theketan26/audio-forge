@@ -1,0 +1,31 @@
+# Rust build artifacts
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# Node / Frontend artifacts
+node_modules/
+dist/
+dist-ssr/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Generated audio & test exports
+test_output.wav
+test_manifest.json
+test_curves.csv
+output.wav
+output_manifest.json
+*.wav
+*.csv
+
+# OS and Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
