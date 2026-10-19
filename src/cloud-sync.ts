@@ -136,6 +136,26 @@ export class CloudSyncService {
       result.messages.push('DATABASE_URL not set in .env (Neon DB record skipped)');
     }
 
+    // 4. Remove local files after successful cloud upload
+    if (params.config.cloud.clean_local_after_upload && result.r2StorageKey) {
+      if (fs.existsSync(params.audioFilePath)) {
+        try {
+          fs.unlinkSync(params.audioFilePath);
+          result.messages.push(`Removed local audio file: ${path.basename(params.audioFilePath)}`);
+        } catch (e: any) {
+          result.messages.push(`Could not delete local audio file: ${e.message}`);
+        }
+      }
+      if (params.reportFilePath && fs.existsSync(params.reportFilePath)) {
+        try {
+          fs.unlinkSync(params.reportFilePath);
+          result.messages.push(`Removed local report file: ${path.basename(params.reportFilePath)}`);
+        } catch (e: any) {
+          result.messages.push(`Could not delete local report file: ${e.message}`);
+        }
+      }
+    }
+
     return result;
   }
 }

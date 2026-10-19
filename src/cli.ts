@@ -109,6 +109,7 @@ program
         });
       }
       console.log('');
+      process.exit(0);
     } catch (err: any) {
       console.error(pc.red(`\n✖ Generation Failed: ${err.message}`));
       if (err.report) {
@@ -161,6 +162,7 @@ program
           table_name: 'audio_generations',
           upload_audio: true,
           upload_report: true,
+          clean_local_after_upload: true,
         },
       };
 
@@ -190,6 +192,7 @@ program
         });
       }
       console.log('');
+      process.exit(0);
     } catch (err: any) {
       console.error(pc.red(`\n✖ Quick Synthesize Failed: ${err.message}`));
       process.exit(1);
@@ -354,6 +357,7 @@ program
         table_name: 'audio_generations',
         upload_audio: true,
         upload_report: true,
+        clean_local_after_upload: true,
       },
     };
 

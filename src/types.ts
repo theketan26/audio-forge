@@ -74,6 +74,7 @@ export const CloudConfigSchema = z.object({
   r2_bucket: z.string().optional().describe('Cloudflare R2 bucket name (defaults to R2_BUCKET_NAME)'),
   upload_audio: z.boolean().default(true).describe('Upload synthesized audio to Cloudflare R2'),
   upload_report: z.boolean().default(true).describe('Upload metrics report JSON to Cloudflare R2'),
+  clean_local_after_upload: z.boolean().default(true).describe('Delete local audio and report files after successful cloud upload'),
 });
 export type CloudConfig = z.infer<typeof CloudConfigSchema>;
 
