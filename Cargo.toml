@@ -1,8 +1,0 @@
-[workspace]
-members = [
-    "crates/audioforge-core",
-    "crates/audioforge-mixer",
-    "crates/audioforge-cli",
-    "crates/audioforge-api",
-]
-resolver = "2"

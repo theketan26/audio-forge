@@ -1,0 +1,48 @@
+{
+  "version": "1.0",
+  "input": {
+    "text": "Hello from Audio Forge! This audio was generated using Piper TTS with full resource monitoring.",
+    "batch": [
+      {
+        "id": "seg_1",
+        "text": "Welcome to Audio Forge CLI.",
+        "speaker_id": 0,
+        "features": {
+          "length_scale": 1
+        }
+      },
+      {
+        "id": "seg_2",
+        "text": "This segment is spoken slightly faster.",
+        "speaker_id": 0,
+        "features": {
+          "length_scale": 0.85
+        }
+      }
+    ]
+  },
+  "voice": {
+    "name": "en_US-lessac-low",
+    "speaker_id": 0,
+    "features": {
+      "length_scale": 1,
+      "noise_scale": 0.667,
+      "noise_w": 0.8,
+      "sentence_silence": 0.2,
+      "volume": 1
+    }
+  },
+  "piper_config": {
+    "use_cuda": false,
+    "auto_download_voice": true
+  },
+  "output": {
+    "path": "./output/synthesized_speech.wav",
+    "format": "wav"
+  },
+  "monitor": {
+    "enabled": true,
+    "report_path": "./output/performance_metrics.json",
+    "sample_interval_ms": 50
+  }
+}

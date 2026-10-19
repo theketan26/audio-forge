@@ -1,0 +1,38 @@
+{
+  "name": "audio-forge",
+  "version": "1.0.0",
+  "description": "CLI tool for generating audio using Piper TTS with multi-voice support and resource monitoring",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "audio-forge": "./bin/audio-forge.js"
+  },
+  "scripts": {
+    "build": "tsup src/cli.ts --format esm --clean --dts",
+    "dev": "tsx src/cli.ts",
+    "start": "node bin/audio-forge.js",
+    "test": "tsx test/index.test.ts"
+  },
+  "keywords": [
+    "tts",
+    "piper",
+    "audio",
+    "cli",
+    "monitoring"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^12.1.0",
+    "picocolors": "^1.1.1",
+    "pidusage": "^3.0.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.5",
+    "@types/pidusage": "^2.0.5",
+    "tsup": "^8.3.0",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.3"
+  }
+}
