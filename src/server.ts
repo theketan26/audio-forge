@@ -47,29 +47,50 @@ export function createApp() {
     await next();
   });
 
-  // Input schema for /api/v1/generate
-  const GenerateRequestSchema = z.object({
-    text: z.string().min(1, 'Text to synthesize is required'),
-    voice: z.string().default('en_US-lessac-low'),
-    speaker_id: z.number().int().nonnegative().default(0),
+  // Batch segment schema for API requests
+  const ApiBatchSegmentSchema = z.object({
+    id: z.string().optional(),
+    text: z.string().min(1, 'Segment text cannot be empty'),
+    speaker_id: z.number().int().nonnegative().optional(),
+    voice_name: z.string().optional(),
     features: z
       .object({
-        length_scale: z.number().positive().default(1.0),
-        noise_scale: z.number().nonnegative().default(0.667),
-        noise_w: z.number().nonnegative().default(0.8),
-        sentence_silence: z.number().nonnegative().default(0.2),
+        length_scale: z.number().positive().optional(),
+        noise_scale: z.number().nonnegative().optional(),
+        noise_w: z.number().nonnegative().optional(),
+        sentence_silence: z.number().nonnegative().optional(),
       })
-      .default({}),
-    output_filename: z.string().optional(),
-    cloud: z
-      .object({
-        enabled: z.boolean().default(true),
-        upload_audio: z.boolean().default(true),
-        upload_report: z.boolean().default(true),
-        clean_local_after_upload: z.boolean().default(true),
-      })
-      .default({}),
+      .optional(),
   });
+
+  // Input schema for /api/v1/generate (supports single text OR batch segments)
+  const GenerateRequestSchema = z
+    .object({
+      text: z.string().optional(),
+      batch: z.array(ApiBatchSegmentSchema).optional(),
+      voice: z.string().default('en_US-lessac-low'),
+      speaker_id: z.number().int().nonnegative().default(0),
+      features: z
+        .object({
+          length_scale: z.number().positive().default(1.0),
+          noise_scale: z.number().nonnegative().default(0.667),
+          noise_w: z.number().nonnegative().default(0.8),
+          sentence_silence: z.number().nonnegative().default(0.2),
+        })
+        .default({}),
+      output_filename: z.string().optional(),
+      cloud: z
+        .object({
+          enabled: z.boolean().default(true),
+          upload_audio: z.boolean().default(true),
+          upload_report: z.boolean().default(true),
+          clean_local_after_upload: z.boolean().default(true),
+        })
+        .default({}),
+    })
+    .refine(data => !!data.text || (data.batch && data.batch.length > 0), {
+      message: 'Either "text" or "batch" must be provided in the request body.',
+    });
 
   // 3. GENERATE AUDIO API (Async with immediate ACK)
   app.post('/api/v1/generate', async c => {
@@ -85,17 +106,26 @@ export function createApp() {
     let voiceName = 'en_US-lessac-low';
     let segmentsCount = 1;
 
-    // Check if body is a full ForgeConfig or a simplified request
+    // Check if body is a simplified request (single text or batch)
     const simpleParsed = GenerateRequestSchema.safeParse(rawBody);
     if (simpleParsed.success) {
       const data = simpleParsed.data;
-      fullText = data.text;
+      if (data.batch && data.batch.length > 0) {
+        fullText = data.batch.map(b => b.text).join(' ');
+        segmentsCount = data.batch.length;
+      } else {
+        fullText = data.text || '';
+        segmentsCount = 1;
+      }
       voiceName = data.voice;
       const fileName = data.output_filename || `api_${Date.now()}_${Math.random().toString(36).substring(7)}.wav`;
 
       config = {
         version: '1.0',
-        input: { text: data.text },
+        input: {
+          text: data.text,
+          batch: data.batch,
+        },
         voice: {
           name: data.voice,
           speaker_id: data.speaker_id,

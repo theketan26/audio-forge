@@ -110,6 +110,27 @@ x-api-key: forge-secret-key
 }
 ```
 
+#### Alternative: Request with Batch Dialogue / Segments
+```json
+{
+  "voice": "en_US-lessac-low",
+  "batch": [
+    {
+      "id": "intro",
+      "text": "Hello, welcome to our interactive audio experience.",
+      "speaker_id": 0,
+      "features": { "length_scale": 1.0 }
+    },
+    {
+      "id": "response",
+      "text": "This second line is spoken slightly faster.",
+      "speaker_id": 0,
+      "features": { "length_scale": 0.85 }
+    }
+  ]
+}
+```
+
 #### Response: `202 Accepted`
 ```json
 {
