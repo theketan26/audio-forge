@@ -23,7 +23,10 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@neondatabase/serverless": "^1.2.0",
+    "aws4fetch": "^1.0.20",
     "commander": "^12.1.0",
+    "dotenv": "^18.0.8",
     "picocolors": "^1.1.1",
     "pidusage": "^3.0.2",
     "zod": "^3.23.8"

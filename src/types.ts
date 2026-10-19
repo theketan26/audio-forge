@@ -66,6 +66,17 @@ export const MonitorConfigSchema = z.object({
 });
 export type MonitorConfig = z.infer<typeof MonitorConfigSchema>;
 
+// Cloud Sync Schema (Neon PostgreSQL & Cloudflare R2)
+export const CloudConfigSchema = z.object({
+  enabled: z.boolean().default(true).describe('Enable syncing records to Neon DB and audio to Cloudflare R2'),
+  database_url: z.string().optional().describe('Neon database connection string (defaults to DATABASE_URL)'),
+  table_name: z.string().default('audio_generations').describe('SQL table name in Neon DB'),
+  r2_bucket: z.string().optional().describe('Cloudflare R2 bucket name (defaults to R2_BUCKET_NAME)'),
+  upload_audio: z.boolean().default(true).describe('Upload synthesized audio to Cloudflare R2'),
+  upload_report: z.boolean().default(true).describe('Upload metrics report JSON to Cloudflare R2'),
+});
+export type CloudConfig = z.infer<typeof CloudConfigSchema>;
+
 // Root Application Configuration Schema
 export const ForgeConfigSchema = z.object({
   version: z.string().default('1.0'),
@@ -74,6 +85,7 @@ export const ForgeConfigSchema = z.object({
   piper_config: PiperConfigSchema.default({}),
   output: OutputConfigSchema.default({}),
   monitor: MonitorConfigSchema.default({}),
+  cloud: CloudConfigSchema.default({}),
 });
 export type ForgeConfig = z.infer<typeof ForgeConfigSchema>;
 

@@ -44,5 +44,11 @@
     "enabled": true,
     "report_path": "./output/performance_metrics.json",
     "sample_interval_ms": 50
+  },
+  "cloud": {
+    "enabled": true,
+    "table_name": "audio_generations",
+    "upload_audio": true,
+    "upload_report": true
   }
 }

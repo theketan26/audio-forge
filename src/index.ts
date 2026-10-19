@@ -3,3 +3,6 @@ export * from './voice-manager.js';
 export * from './piper-resolver.js';
 export * from './monitor.js';
 export * from './generator.js';
+export * from './db.js';
+export * from './storage.js';
+export * from './cloud-sync.js';

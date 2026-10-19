@@ -5,6 +5,7 @@ import type { ForgeConfig, PerformanceReport, SegmentMetrics, VoiceFeatures } fr
 import { resolvePiperBinary } from './piper-resolver.js';
 import { VoiceManager, type ResolvedVoice } from './voice-manager.js';
 import { ProcessMonitor, inspectWavFile } from './monitor.js';
+import { CloudSyncService, type CloudSyncResult } from './cloud-sync.js';
 
 /**
  * Concatenate multiple WAV files with identical formats into a single output WAV
@@ -59,6 +60,7 @@ export class AudioForgeGenerator {
   public async generate(config: ForgeConfig): Promise<{
     report: PerformanceReport;
     outputPath: string;
+    cloudResult?: CloudSyncResult;
   }> {
     const monitor = new ProcessMonitor(config.monitor.sample_interval_ms);
     monitor.startTimer();
@@ -182,7 +184,18 @@ export class AudioForgeGenerator {
         segments: segmentMetricsList.length > 0 ? segmentMetricsList : undefined,
       });
 
-      return { report, outputPath };
+      let cloudResult: CloudSyncResult | undefined;
+      if (config.cloud?.enabled) {
+        const cloudSync = new CloudSyncService(config.cloud);
+        cloudResult = await cloudSync.sync({
+          config,
+          report,
+          audioFilePath: outputPath,
+          reportFilePath: config.monitor.enabled ? path.resolve(config.monitor.report_path) : undefined,
+        });
+      }
+
+      return { report, outputPath, cloudResult };
     } catch (error) {
       await monitor.stopMonitoring();
       const errMsg = error instanceof Error ? error.message : String(error);
@@ -196,6 +209,20 @@ export class AudioForgeGenerator {
         reportPath: config.monitor.enabled ? path.resolve(config.monitor.report_path) : undefined,
         error: errMsg,
       });
+
+      if (config.cloud?.enabled) {
+        try {
+          const cloudSync = new CloudSyncService(config.cloud);
+          await cloudSync.sync({
+            config,
+            report: failedReport,
+            audioFilePath: outputPath,
+            reportFilePath: config.monitor.enabled ? path.resolve(config.monitor.report_path) : undefined,
+          });
+        } catch {
+          // ignore error reporting sync failure
+        }
+      }
 
       throw Object.assign(new Error(errMsg), { report: failedReport });
     }

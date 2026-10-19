@@ -1,6 +1,6 @@
 # Audio Forge CLI 🎙️⚡
 
-A high-performance Command-Line Interface (CLI) tool for generating speech audio using **Piper TTS**, featuring multi-voice options, declarative JSON configuration with voice features, and real-time process resource monitoring (CPU, RAM, RTF latency) with JSON reporting.
+A high-performance Command-Line Interface (CLI) tool for generating speech audio using **Piper TTS**, featuring multi-voice options, declarative JSON configuration with fine-grained voice features, real-time resource & latency monitoring, **Neon PostgreSQL** database tracking, and private, secure **Cloudflare R2** file storage (with zero AWS SDK dependency).
 
 ---
 
@@ -8,7 +8,7 @@ A high-performance Command-Line Interface (CLI) tool for generating speech audio
 
 - **Piper TTS Powered**: Native integration with Piper standalone inference engine.
 - **Multi-Voice Architecture**: Built-in voice catalog across English (US, UK), Spanish, French, German, and Hindi with automatic model caching and download.
-- **Voice Tuning Features**: Full control over speech parameters:
+- **Voice Tuning Features**:
   - `length_scale`: Phoneme length multiplier (speed / tempo control).
   - `noise_scale`: Generator variability (expressiveness).
   - `noise_w`: Pronunciation and cadence variance.
@@ -19,6 +19,11 @@ A high-performance Command-Line Interface (CLI) tool for generating speech audio
   - Timing: Initialization time, synthesis duration, total wall time, audio duration, Real-Time Factor (RTF).
   - Resources: Peak & average CPU utilization, physical RAM (RSS), virtual memory (VMS), and disk I/O metrics.
   - Generates machine-readable `metrics.json` reports alongside the audio output.
+- **Neon PostgreSQL Integration**: Records every generation event, audio metadata, timing, and full resource consumption stats into your SQL database.
+- **Secure Cloudflare R2 Storage**:
+  - 100% private bucket storage (no public access needed).
+  - Generates secure, cryptographically signed, expiring URLs for authorized access.
+  - Uses lightweight `aws4fetch` (zero heavy AWS SDK).
 
 ---
 
@@ -33,147 +38,63 @@ npm run build
 npm link   # Installs `audio-forge` globally in your environment
 ```
 
-### 2. Generate Starter Configuration
+### 2. Environment Configuration (`.env`)
+
+Open `.env` and fill in your values (reference [`.env.example`](file:///home/developer/projects/audio-forge/.env.example)):
 
 ```bash
-audio-forge init my_config.json
+# 1. Neon PostgreSQL Database
+DATABASE_URL=postgresql://user:password@ep-xyz.us-east-2.aws.neon.tech/neondb?sslmode=require
+DB_TABLE_NAME=audio_generations
+
+# 2. Cloudflare R2 File Storage (Private & Secure)
+R2_S3_API_URL=https://<your-account-id>.r2.cloudflarestorage.com
+R2_ACCESS_KEY_ID=your-r2-access-key-id
+R2_SECRET_ACCESS_KEY=your-r2-secret-access-key
+R2_BUCKET_NAME=your-bucket-name
 ```
 
-### 3. Generate Audio from JSON Config
+### 3. Initialize Neon Database Table
+
+Run the SQL script in [`db/schema.sql`](file:///home/developer/projects/audio-forge/db/schema.sql) in your **Neon Console -> SQL Editor** (or let the CLI auto-create it on first run):
+
+```sql
+CREATE TABLE IF NOT EXISTS public.audio_generations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+    status TEXT NOT NULL CHECK (status IN ('success', 'failed')),
+    voice TEXT NOT NULL,
+    text_input TEXT NOT NULL,
+    text_characters INTEGER,
+    text_words INTEGER,
+    segments_count INTEGER DEFAULT 1,
+    audio_file_name TEXT,
+    storage_key TEXT,
+    storage_uri TEXT,
+    audio_url TEXT,
+    report_url TEXT,
+    audio_duration_seconds NUMERIC(10, 3),
+    synthesis_ms NUMERIC(10, 2),
+    total_elapsed_ms NUMERIC(10, 2),
+    real_time_factor NUMERIC(8, 4),
+    cpu_avg_percent NUMERIC(6, 2),
+    cpu_peak_percent NUMERIC(6, 2),
+    memory_peak_rss_mb NUMERIC(8, 2),
+    memory_peak_vms_mb NUMERIC(8, 2),
+    output_bytes BIGINT,
+    sample_rate INTEGER,
+    config JSONB,
+    report JSONB,
+    error_message TEXT
+);
+```
+
+### 4. Generate Speech
 
 ```bash
-audio-forge generate -c my_config.json
-```
+# Generate from JSON configuration file (auto-uploads to R2 & logs to Neon)
+audio-forge generate -c example_config.json
 
----
-
-## CLI Commands
-
-| Command | Description | Example |
-| :--- | :--- | :--- |
-| `generate -c <file>` | Synthesize audio from JSON configuration file | `audio-forge generate -c config.json` |
-| `quick "<text>"` | Quickly synthesize text directly from CLI flags | `audio-forge quick "Hello world" -v en_US-lessac-low` |
-| `voices list` | Show catalog of available and downloaded voice models | `audio-forge voices list` |
-| `voices download <name>` | Pre-download and cache a voice model | `audio-forge voices download en_US-lessac-medium` |
-| `voices info <name>` | View sample rate, file paths, and speaker IDs | `audio-forge voices info en_US-libritts-high` |
-| `validate -c <file>` | Validate JSON configuration against schema | `audio-forge validate -c config.json` |
-| `init [filename]` | Create a fully annotated starter JSON config file | `audio-forge init sample.json` |
-
----
-
-## JSON Configuration Schema
-
-```json
-{
-  "version": "1.0",
-  "input": {
-    "text": "Hello world from Audio Forge!",
-    "batch": [
-      {
-        "id": "segment_1",
-        "text": "Welcome to Audio Forge CLI.",
-        "speaker_id": 0,
-        "features": {
-          "length_scale": 1.0
-        }
-      },
-      {
-        "id": "segment_2",
-        "text": "This segment is spoken slightly faster.",
-        "speaker_id": 0,
-        "features": {
-          "length_scale": 0.85
-        }
-      }
-    ]
-  },
-  "voice": {
-    "name": "en_US-lessac-low",
-    "speaker_id": 0,
-    "features": {
-      "length_scale": 1.0,
-      "noise_scale": 0.667,
-      "noise_w": 0.8,
-      "sentence_silence": 0.2,
-      "volume": 1.0
-    }
-  },
-  "piper_config": {
-    "use_cuda": false,
-    "threads": 4,
-    "auto_download_voice": true
-  },
-  "output": {
-    "path": "./output/synthesized_speech.wav",
-    "format": "wav"
-  },
-  "monitor": {
-    "enabled": true,
-    "report_path": "./output/performance_metrics.json",
-    "sample_interval_ms": 50
-  }
-}
-```
-
----
-
-## Sample Performance & Resource Report (`metrics.json`)
-
-```json
-{
-  "timestamp": "2026-10-19T09:20:11.243Z",
-  "status": "success",
-  "task": {
-    "voice": "en_US-lessac-low",
-    "text_characters": 67,
-    "text_words": 11,
-    "segments_count": 2,
-    "output_file": "/home/developer/projects/audio-forge/output/synthesized_speech.wav"
-  },
-  "timing": {
-    "initialization_ms": 0.37,
-    "synthesis_ms": 636.9,
-    "total_elapsed_ms": 637.6,
-    "audio_duration_seconds": 4.864,
-    "real_time_factor_rtf": 0.1309
-  },
-  "resources": {
-    "cpu": {
-      "avg_percent": 182.08,
-      "peak_percent": 400.0,
-      "user_seconds": 0.986,
-      "system_seconds": 0.174
-    },
-    "memory": {
-      "initial_rss_mb": 82.28,
-      "peak_rss_mb": 114.67,
-      "final_rss_mb": 111.46,
-      "peak_vms_mb": 362.68
-    },
-    "io": {
-      "output_bytes": 155692,
-      "sample_rate": 16000,
-      "channels": 1,
-      "samples": 77824
-    }
-  },
-  "segments": [
-    {
-      "id": "seg_1",
-      "text": "Welcome to Audio Forge CLI.",
-      "speaker_id": 0,
-      "duration_seconds": 2.424,
-      "synthesis_ms": 324.43,
-      "rtf": 0.1338
-    },
-    {
-      "id": "seg_2",
-      "text": "This segment is spoken slightly faster.",
-      "speaker_id": 0,
-      "duration_seconds": 2.44,
-      "synthesis_ms": 311.18,
-      "rtf": 0.1275
-    }
-  ]
-}
+# Disable cloud sync on the fly if running locally only:
+audio-forge generate -c example_config.json --no-cloud
 ```

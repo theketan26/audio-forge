@@ -44,6 +44,7 @@ program
   .option('-o, --output <file>', 'Override output WAV file destination')
   .option('-r, --report <file>', 'Override performance report JSON destination')
   .option('-v, --voice <name>', 'Override voice model name')
+  .option('--no-cloud', 'Disable Supabase database and storage sync')
   .action(async options => {
     try {
       const configPath = path.resolve(options.config);
@@ -78,16 +79,36 @@ program
       if (options.output) config.output.path = options.output;
       if (options.report) config.monitor.report_path = options.report;
       if (options.voice) config.voice.name = options.voice;
+      if (options.cloud === false) config.cloud.enabled = false;
 
       console.log(pc.blue('Starting audio synthesis engine and process monitor...'));
       const generator = new AudioForgeGenerator();
-      const { report, outputPath } = await generator.generate(config);
+      const { report, outputPath, cloudResult } = await generator.generate(config);
 
       printPerformanceSummary(report);
       if (config.monitor.enabled) {
         console.log(pc.green(`✔ Performance report written to: ${pc.bold(config.monitor.report_path)}`));
       }
-      console.log(pc.green(`✔ Audio generated successfully at: ${pc.bold(outputPath)}\n`));
+      console.log(pc.green(`✔ Audio generated successfully at: ${pc.bold(outputPath)}`));
+
+      if (cloudResult?.dbRecordId) {
+        console.log(pc.cyan(`🐘 Neon DB Record ID:    ${pc.bold(cloudResult.dbRecordId)}`));
+      }
+      if (cloudResult?.r2StorageUri) {
+        console.log(pc.cyan(`🔒 R2 Private URI:       ${pc.bold(cloudResult.r2StorageUri)}`));
+      }
+      if (cloudResult?.r2SecureSignedUrl) {
+        console.log(pc.cyan(`🔑 R2 Signed Access URL: ${pc.underline(cloudResult.r2SecureSignedUrl)}`));
+      }
+      if (cloudResult?.r2ReportSignedUrl) {
+        console.log(pc.cyan(`🔑 R2 Report Signed URL: ${pc.underline(cloudResult.r2ReportSignedUrl)}`));
+      }
+      if (cloudResult?.messages && cloudResult.messages.length > 0) {
+        cloudResult.messages.forEach(msg => {
+          console.log(pc.dim(`ℹ  Cloud Sync: ${msg}`));
+        });
+      }
+      console.log('');
     } catch (err: any) {
       console.error(pc.red(`\n✖ Generation Failed: ${err.message}`));
       if (err.report) {
@@ -135,15 +156,40 @@ program
           report_path: options.report,
           sample_interval_ms: 50,
         },
+        cloud: {
+          enabled: true,
+          table_name: 'audio_generations',
+          upload_audio: true,
+          upload_report: true,
+        },
       };
 
       console.log(pc.cyan(`Synthesizing: "${pc.italic(text)}"`));
       const generator = new AudioForgeGenerator();
-      const { report, outputPath } = await generator.generate(config);
+      const { report, outputPath, cloudResult } = await generator.generate(config);
 
       printPerformanceSummary(report);
       console.log(pc.green(`✔ Output saved to ${outputPath}`));
-      console.log(pc.green(`✔ Report saved to ${options.report}\n`));
+      console.log(pc.green(`✔ Report saved to ${options.report}`));
+
+      if (cloudResult?.dbRecordId) {
+        console.log(pc.cyan(`🐘 Neon DB Record ID:    ${pc.bold(cloudResult.dbRecordId)}`));
+      }
+      if (cloudResult?.r2StorageUri) {
+        console.log(pc.cyan(`🔒 R2 Private URI:       ${pc.bold(cloudResult.r2StorageUri)}`));
+      }
+      if (cloudResult?.r2SecureSignedUrl) {
+        console.log(pc.cyan(`🔑 R2 Signed Access URL: ${pc.underline(cloudResult.r2SecureSignedUrl)}`));
+      }
+      if (cloudResult?.r2ReportSignedUrl) {
+        console.log(pc.cyan(`🔑 R2 Report Signed URL: ${pc.underline(cloudResult.r2ReportSignedUrl)}`));
+      }
+      if (cloudResult?.messages && cloudResult.messages.length > 0) {
+        cloudResult.messages.forEach(msg => {
+          console.log(pc.dim(`ℹ  Cloud Sync: ${msg}`));
+        });
+      }
+      console.log('');
     } catch (err: any) {
       console.error(pc.red(`\n✖ Quick Synthesize Failed: ${err.message}`));
       process.exit(1);
@@ -302,6 +348,12 @@ program
         enabled: true,
         report_path: './output/performance_metrics.json',
         sample_interval_ms: 50,
+      },
+      cloud: {
+        enabled: true,
+        table_name: 'audio_generations',
+        upload_audio: true,
+        upload_report: true,
       },
     };
 
